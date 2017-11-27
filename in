@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta charset="utf-8">
+        <title>Pong</title>
+        <link href='https://fonts.googleapis.com/css?family=Alegreya+Sans+SC:900,500' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Josefin+Sans:400,600' rel='stylesheet' type='text/css'>
+</head>
+
+<style>
+
+            body {
+                margin: 0;
+                background-color: #f8f8f8;
+                font-family: 'Josefin Sans', Arial, sans-serif;
+            }
+            h1, h2, h3, h5 {
+                font-family: 'Alegreya Sans SC', impact;
+            }
+            h1 {
+                color: white;
+                text-align: center;
+                margin-top: 2px;
+                font-size: 3em;
+            }
+            h2 {
+                font-size: 32px;
+                color: #222;
+                text-shadow: 1px 1px rgb(200, 200, 200);
+                margin-bottom: 0;
+            }
+            h3 {
+                font-size: 1.5em;
+                text-shadow: 1px 1px rgb(200, 200, 200);
+                margin-bottom: 12px;
+            }
+
+            a {
+                color: #04b;
+                font-weight: bold;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+             #title {
+                margin: 0;
+                width: 100%;
+                height: 60px;
+                position: fixed;
+                top: 0;
+                background-color: #222;
+                -webkit-box-shadow: 0px 2px 16px 0px rgba(0,0,0,0.7);
+                -moz-box-shadow: 0px 2px 16px 0px rgba(0,0,0,0.7);
+                box-shadow: 0px 2px 16px 0px rgba(0,0,0,0.7);
+            }
+</style>
+<body>
+<canvas id = "gameCanvas" width = "594" height = "350"></canvas>
+<script>
+/**
+*****************************************
+* PRO TIP: Hit the ball on the edges    *
+  then the ball will go faster.         * 
+*****************************************
+*/
+// Controls the size of the screen
+var canvas;
+// Controls the things on the screen
+var canvasContext;
+// Controls the ball's x position 
+var ballX = 50;
+// Controls the ball's y position 
+var ballY = 50;
+// Controls the speed of ball's x position
+var ballSpeedX = 10;
+// Controls the speed of ball's y position
+var ballSpeedY = 4;
+// Is the player paddle
+var paddle1Y = 250;
+// Is the computer paddle
+var paddle2Y = 250;
+// Is the paddle height
+const PADDLE_HEIGHT = 100;
+// Is the paddle thickness
+const PADDLE_THICKNESS = 10;
+// Is the winning score
+const WINNING_SCORE = 10;
+// Is the player score
+var playerScore = 0;
+// Is the computer score
+var computerScore = 0;
+var showingWinScreen = false;
+function calculateMousePos(evt) {
+    var rect = canvas.getBoundingClientRect();
+    var root = document.documentElement;
+    var mouseX = evt.clientX - rect.left - root.scrollLeft;
+    var mouseY = evt.clientY - rect.top - root.scrollTop;
+    return {
+        x: mouseX,
+        y: mouseY
+    };
+}
+function handleMouseClick(evt) {
+    if(showingWinScreen) {
+        playerScore = 0;
+        computerScore = 0;
+        showingWinScreen = false;
+    }
+}
+    canvas = document.getElementById('gameCanvas');
+    canvasContext = canvas.getContext('2d');
+var framesPerSecond = 30;
+    setInterval(function() {
+    moveEverything();
+    drawEverything();
+    }, 1000 / framesPerSecond);
+    canvas.addEventListener('mousedown', handleMouseClick)
+    canvas.addEventListener('mousemove', 
+            function(evt) {
+                var mousePos = calculateMousePos(evt);
+                paddle1Y = mousePos.y - (PADDLE_HEIGHT / 2);
+            });
+function ballReset() {
+    if(playerScore == WINNING_SCORE || computerScore == WINNING_SCORE)     {
+       showingWinScreen = true;
+    }
+    ballSpeedX = -ballSpeedX;
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
+}
+function computerMovement() {
+    var paddle2YCenter = paddle2Y + (PADDLE_HEIGHT /  2)
+    if(paddle2YCenter < ballY - 35) {
+        paddle2Y+= 6;
+    } else if(paddle2YCenter > ballY + 35) {
+        paddle2Y-= 6;
+    }
+}
+function moveEverything() {
+    if(showingWinScreen) {
+        return;
+    }
+computerMovement();
+ballX+= ballSpeedX;
+ballY+= ballSpeedY;
+    /** 
+* I add minus to all of the if's here because -(-ballSpeedX) and -(-ballSpeedY) = ballSpeedX and ballSpeedY. 
+    **/
+    if(ballX < 0) {
+        if(ballY > paddle1Y && ballY < paddle1Y + PADDLE_HEIGHT){
+            ballSpeedX = -ballSpeedX;
+            var deltaY = ballY - (paddle1Y + PADDLE_HEIGHT / 2);
+            ballSpeedY = deltaY * 0.3;
+        } else {
+            // Must be before ballReset()
+            computerScore++;
+            ballReset();
+        }
+    }
+    if(ballX > canvas.width) {
+    if(ballY > paddle2Y && ballY < paddle2Y + PADDLE_HEIGHT){
+            ballSpeedX = -ballSpeedX;
+            var deltaY = ballY - (paddle2Y + PADDLE_HEIGHT / 2);
+            ballSpeedY = deltaY * 0.35;
+        } else {
+            // Must be before ballReset()
+            playerScore++;
+            ballReset();
+        }   
+    }
+    if(ballY < 0) {
+    ballSpeedY = -ballSpeedY;   
+    }
+    if(ballY > canvas.height) {
+    ballSpeedY = -ballSpeedY;   
+    }
+}
+function drawNet() {
+    for(var i = 0; i < canvas.height; i+=40) {
+        Rect(canvas.width / 2 - 1, i, 2, 20, 'white');
+    }
+}
+function drawEverything() {
+    // Adds black color
+    Rect(0, 0, canvas.width, canvas.height, 'black');
+     if(showingWinScreen) {
+    if(playerScore == WINNING_SCORE) {
+        var playerWinScore = playerScore - computerScore;
+        canvasContext.fillStyle = 'white';
+        // Shows the winning screen
+        if(playerWinScore === 1) {
+        canvasContext.fillText("Wohooo!!!! You won by " + playerWinScore + " point.", 250, 200);
+        } else {
+        canvasContext.fillText("Wohooo!!!! You won by " + playerWinScore + " points.", 250, 200);
+        }
+        canvasContext.fillText("Click to play again", 250, canvas.height - 10);
+    } else if(computerScore == WINNING_SCORE) {
+        var computerWinScore = computerScore - playerScore;
+        canvasContext.fillStyle = 'white';
+        // Shows the losing screen
+         if(computerWinScore === 1) {
+        canvasContext.fillText("Ohnoes!!! You lost by " + computerWinScore + " point.", 250, 200);
+        } else {
+            canvasContext.fillText("Ohnoes!!! You lost by " + computerWinScore + " points.", 250, 200);
+        }
+        canvasContext.fillText("Click to play again", 240, canvas.height - 10);
+    }
+    return;
+    }
+    drawNet();
+    // Makes the left player paddle
+    Rect(0, paddle1Y, PADDLE_THICKNESS, PADDLE_HEIGHT, 'white');
+    // Makes the right computer paddle
+    Rect(canvas.width - PADDLE_THICKNESS, paddle2Y, PADDLE_THICKNESS, PADDLE_HEIGHT, 'white');
+    // Draws ball
+    Circle(ballX, ballY, 10, 'white');
+    canvasContext.fillText(playerScore, 100, 100);
+    canvasContext.fillText(computerScore, canvas.width - 100, 100);
+}
+function Circle(centerX, centerY, radius, drawColor) {
+    canvasContext.fillStyle = drawColor;
+    canvasContext.beginPath();
+    canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2, false);
+    canvasContext.fill();
+}
+function Rect(leftX, topY, width, height, drawColor) {
+    canvasContext.fillStyle = drawColor;
+    canvasContext.fillRect(leftX, topY, width, height);
+}
+</script>
+<h2>Leaderboards</h2>
+<ol>
+    <li></li> 
+    <li></li> 
+    <li></li>
+    <li></li>
+</ol>
+</body>
+</html>
